@@ -1,0 +1,21 @@
+<!-- 完全にクライアントサイドで動作 -->
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Time Tracker</title>
+  <script src="https://apis.google.com/js/api.js"></script>
+</head>
+<body>
+  <!-- シンプルなUI -->
+  <div id="app">
+    <h1>総時間: <span id="total">0時間0分</span></h1>
+    <form id="timeForm">
+      <input type="number" id="hours" placeholder="時間">
+      <input type="number" id="minutes" placeholder="分">
+      <input type="text" id="note" placeholder="メモ（任意）">
+      <button type="submit">追加</button>
+    </form>
+    <div id="history"></div>
+  </div>
+</body>
+</html>
