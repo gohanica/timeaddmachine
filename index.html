@@ -1,21 +1,601 @@
-<!-- 完全にクライアントサイドで動作 -->
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
-  <title>Time Add Machine</title>
-  <script src="https://apis.google.com/js/api.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .total-time {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #2196F3;
+            margin-bottom: 10px;
+        }
+        
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .input-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .input-group {
+            flex: 1;
+            min-width: 80px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        .input-group input:focus {
+            outline: none;
+            border-color: #2196F3;
+        }
+        
+        .note-input {
+            width: 100%;
+            margin-bottom: 15px;
+        }
+        
+        .btn {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+        }
+        
+        .btn:hover {
+            background: #1976D2;
+        }
+        
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .btn-secondary {
+            background: #f44336;
+            margin-top: 10px;
+        }
+        
+        .btn-secondary:hover {
+            background: #d32f2f;
+        }
+        
+        .history {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .history-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .history-item:last-child {
+            border-bottom: none;
+        }
+        
+        .history-time {
+            font-weight: bold;
+            color: #2196F3;
+        }
+        
+        .history-date {
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .history-note {
+            color: #777;
+            font-style: italic;
+        }
+        
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status.info {
+            background: #cce7ff;
+            color: #0066cc;
+        }
+        
+        .auth-section {
+            text-align: center;
+            padding: 40px 20px;
+        }
+        
+        .quick-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .quick-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            flex: 1;
+        }
+        
+        .quick-btn:hover {
+            background: #45a049;
+        }
+        
+        @media (max-width: 600px) {
+            .input-form {
+                flex-direction: column;
+            }
+            
+            .quick-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
 </head>
 <body>
-  <!-- シンプルなUI -->
-  <div id="app">
-    <h1>総時間: <span id="total">0時間0分</span></h1>
-    <form id="timeForm">
-      <input type="number" id="hours" placeholder="時間">
-      <input type="number" id="minutes" placeholder="分">
-      <input type="text" id="note" placeholder="メモ（任意）">
-      <button type="submit">追加</button>
-    </form>
-    <div id="history"></div>
-  </div>
+    <div class="container">
+        <div class="header">
+            <h1>Time Tracker</h1>
+            <div class="total-time" id="totalTime">0時間0分</div>
+            <div class="history-date">総積み上げ時間</div>
+        </div>
+        
+        <div id="authSection" class="auth-section">
+            <h2>Google Drive連携</h2>
+            <p>データの保存・読み込みにGoogle Driveを使用します</p>
+            <button class="btn" onclick="authorize()">Googleアカウントでログイン</button>
+        </div>
+        
+        <div id="mainApp" style="display: none;">
+            <div class="card">
+                <h2>時間を追加</h2>
+                <div class="quick-buttons">
+                    <button class="quick-btn" onclick="quickAdd(15)">15分</button>
+                    <button class="quick-btn" onclick="quickAdd(30)">30分</button>
+                    <button class="quick-btn" onclick="quickAdd(60)">1時間</button>
+                    <button class="quick-btn" onclick="quickAdd(120)">2時間</button>
+                </div>
+                <div class="input-form">
+                    <div class="input-group">
+                        <label for="hours">時間</label>
+                        <input type="number" id="hours" min="0" value="0">
+                    </div>
+                    <div class="input-group">
+                        <label for="minutes">分</label>
+                        <input type="number" id="minutes" min="0" max="59" value="0">
+                    </div>
+                </div>
+                <div class="note-input">
+                    <label for="note">メモ（任意）</label>
+                    <input type="text" id="note" placeholder="何をしましたか？">
+                </div>
+                <button class="btn" onclick="addTime()">時間を追加</button>
+            </div>
+            
+            <div class="card">
+                <h2>最近の履歴</h2>
+                <div class="history" id="history">
+                    <div class="history-item">
+                        <span class="history-date">履歴がありません</span>
+                    </div>
+                </div>
+                <button class="btn btn-secondary" onclick="exportData()">CSVエクスポート</button>
+            </div>
+        </div>
+        
+        <div id="status" class="status" style="display: none;"></div>
+    </div>
+
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script>
+        // Google Drive API設定
+        const CLIENT_ID = '108612695308531539263'; // Google Cloud Consoleから取得
+        const API_KEY = '41bc705b4f51b4aebff7dbb7e2694b33b8cf9a60'; // Google Cloud Consoleから取得
+        const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
+        const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+        
+        let gapi;
+        let isInitialized = false;
+        let dataFileId = null;
+        let timeData = {
+            totalMinutes: 0,
+            entries: [],
+            lastModified: new Date().toISOString()
+        };
+        
+        // 初期化
+        async function initialize() {
+            await gapi.load('client:auth2', initializeGapi);
+        }
+        
+        async function initializeGapi() {
+            await gapi.client.init({
+                apiKey: API_KEY,
+                clientId: CLIENT_ID,
+                discoveryDocs: [DISCOVERY_DOC],
+                scope: SCOPES
+            });
+            isInitialized = true;
+            
+            // 既にログイン済みかチェック
+            if (gapi.auth2.getAuthInstance().isSignedIn.get()) {
+                await loadData();
+                showMainApp();
+            }
+        }
+        
+        // 認証
+        async function authorize() {
+            if (!isInitialized) {
+                showStatus('初期化中...', 'info');
+                return;
+            }
+            
+            try {
+                await gapi.auth2.getAuthInstance().signIn();
+                await loadData();
+                showMainApp();
+                showStatus('ログイン成功', 'success');
+            } catch (error) {
+                showStatus('ログインに失敗しました: ' + error.message, 'error');
+            }
+        }
+        
+        // メインアプリ表示
+        function showMainApp() {
+            document.getElementById('authSection').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'block';
+            updateDisplay();
+        }
+        
+        // データ読み込み
+        async function loadData() {
+            try {
+                // timetrack フォルダを検索
+                const folderResponse = await gapi.client.drive.files.list({
+                    q: "name='timetrack' and mimeType='application/vnd.google-apps.folder'"
+                });
+                
+                let folderId;
+                if (folderResponse.result.files.length === 0) {
+                    // フォルダが存在しない場合は作成
+                    const createFolderResponse = await gapi.client.drive.files.create({
+                        resource: {
+                            name: 'timetrack',
+                            mimeType: 'application/vnd.google-apps.folder'
+                        }
+                    });
+                    folderId = createFolderResponse.result.id;
+                } else {
+                    folderId = folderResponse.result.files[0].id;
+                }
+                
+                // data.json を検索
+                const fileResponse = await gapi.client.drive.files.list({
+                    q: `name='data.json' and parents='${folderId}'`
+                });
+                
+                if (fileResponse.result.files.length === 0) {
+                    // ファイルが存在しない場合は初期データで作成
+                    await saveData();
+                } else {
+                    dataFileId = fileResponse.result.files[0].id;
+                    // ファイルの内容を読み込み
+                    const contentResponse = await gapi.client.drive.files.get({
+                        fileId: dataFileId,
+                        alt: 'media'
+                    });
+                    
+                    try {
+                        timeData = JSON.parse(contentResponse.body);
+                    } catch (error) {
+                        console.error('データの解析に失敗:', error);
+                        timeData = {
+                            totalMinutes: 0,
+                            entries: [],
+                            lastModified: new Date().toISOString()
+                        };
+                    }
+                }
+            } catch (error) {
+                console.error('データの読み込みに失敗:', error);
+                showStatus('データの読み込みに失敗しました', 'error');
+            }
+        }
+        
+        // データ保存
+        async function saveData() {
+            try {
+                timeData.lastModified = new Date().toISOString();
+                const content = JSON.stringify(timeData, null, 2);
+                
+                if (dataFileId) {
+                    // 既存ファイルを更新
+                    await gapi.client.request({
+                        path: `https://www.googleapis.com/upload/drive/v3/files/${dataFileId}`,
+                        method: 'PATCH',
+                        params: { uploadType: 'media' },
+                        headers: { 'Content-Type': 'application/json' },
+                        body: content
+                    });
+                } else {
+                    // 新規ファイル作成
+                    const folderResponse = await gapi.client.drive.files.list({
+                        q: "name='timetrack' and mimeType='application/vnd.google-apps.folder'"
+                    });
+                    const folderId = folderResponse.result.files[0].id;
+                    
+                    const response = await gapi.client.request({
+                        path: 'https://www.googleapis.com/upload/drive/v3/files',
+                        method: 'POST',
+                        params: { uploadType: 'multipart' },
+                        headers: { 'Content-Type': 'multipart/related; boundary="boundary"' },
+                        body: createMultipartBody({
+                            name: 'data.json',
+                            parents: [folderId]
+                        }, content)
+                    });
+                    
+                    dataFileId = JSON.parse(response.body).id;
+                }
+                
+                // 日次バックアップ作成
+                await createBackup();
+                
+            } catch (error) {
+                console.error('データの保存に失敗:', error);
+                showStatus('データの保存に失敗しました', 'error');
+            }
+        }
+        
+        // バックアップ作成
+        async function createBackup() {
+            try {
+                const today = new Date().toISOString().split('T')[0];
+                const backupName = `backup-${today}.json`;
+                
+                const folderResponse = await gapi.client.drive.files.list({
+                    q: "name='timetrack' and mimeType='application/vnd.google-apps.folder'"
+                });
+                const folderId = folderResponse.result.files[0].id;
+                
+                // 同じ日のバックアップが既に存在するかチェック
+                const existingBackup = await gapi.client.drive.files.list({
+                    q: `name='${backupName}' and parents='${folderId}'`
+                });
+                
+                if (existingBackup.result.files.length === 0) {
+                    await gapi.client.request({
+                        path: 'https://www.googleapis.com/upload/drive/v3/files',
+                        method: 'POST',
+                        params: { uploadType: 'multipart' },
+                        headers: { 'Content-Type': 'multipart/related; boundary="boundary"' },
+                        body: createMultipartBody({
+                            name: backupName,
+                            parents: [folderId]
+                        }, JSON.stringify(timeData, null, 2))
+                    });
+                }
+            } catch (error) {
+                console.error('バックアップの作成に失敗:', error);
+            }
+        }
+        
+        // マルチパートボディ作成
+        function createMultipartBody(metadata, data) {
+            const boundary = 'boundary';
+            const delimiter = '\r\n--' + boundary + '\r\n';
+            const close_delim = '\r\n--' + boundary + '--';
+            
+            let body = delimiter +
+                'Content-Type: application/json\r\n\r\n' +
+                JSON.stringify(metadata) + delimiter +
+                'Content-Type: application/json\r\n\r\n' +
+                data + close_delim;
+            
+            return body;
+        }
+        
+        // 時間追加
+        async function addTime() {
+            const hours = parseInt(document.getElementById('hours').value) || 0;
+            const minutes = parseInt(document.getElementById('minutes').value) || 0;
+            const note = document.getElementById('note').value.trim();
+            
+            if (hours === 0 && minutes === 0) {
+                showStatus('時間を入力してください', 'error');
+                return;
+            }
+            
+            const totalMinutes = hours * 60 + minutes;
+            const entry = {
+                id: Date.now().toString(),
+                minutes: totalMinutes,
+                timestamp: new Date().toISOString(),
+                note: note
+            };
+            
+            timeData.entries.unshift(entry);
+            timeData.totalMinutes += totalMinutes;
+            
+            await saveData();
+            updateDisplay();
+            
+            // フォームリセット
+            document.getElementById('hours').value = 0;
+            document.getElementById('minutes').value = 0;
+            document.getElementById('note').value = '';
+            
+            showStatus(`${formatTime(totalMinutes)}を追加しました`, 'success');
+        }
+        
+        // クイック追加
+        async function quickAdd(minutes) {
+            const entry = {
+                id: Date.now().toString(),
+                minutes: minutes,
+                timestamp: new Date().toISOString(),
+                note: ''
+            };
+            
+            timeData.entries.unshift(entry);
+            timeData.totalMinutes += minutes;
+            
+            await saveData();
+            updateDisplay();
+            
+            showStatus(`${formatTime(minutes)}を追加しました`, 'success');
+        }
+        
+        // 表示更新
+        function updateDisplay() {
+            document.getElementById('totalTime').textContent = formatTime(timeData.totalMinutes);
+            
+            const historyDiv = document.getElementById('history');
+            if (timeData.entries.length === 0) {
+                historyDiv.innerHTML = '<div class="history-item"><span class="history-date">履歴がありません</span></div>';
+                return;
+            }
+            
+            const recentEntries = timeData.entries.slice(0, 10);
+            historyDiv.innerHTML = recentEntries.map(entry => `
+                <div class="history-item">
+                    <div>
+                        <div class="history-time">${formatTime(entry.minutes)}</div>
+                        <div class="history-date">${formatDate(entry.timestamp)}</div>
+                        ${entry.note ? `<div class="history-note">${entry.note}</div>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // 時間フォーマット
+        function formatTime(minutes) {
+            const hours = Math.floor(minutes / 60);
+            const mins = minutes % 60;
+            return `${hours}時間${mins}分`;
+        }
+        
+        // 日付フォーマット
+        function formatDate(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleString('ja-JP');
+        }
+        
+        // CSVエクスポート
+        function exportData() {
+            if (timeData.entries.length === 0) {
+                showStatus('エクスポートするデータがありません', 'error');
+                return;
+            }
+            
+            const csvContent = [
+                ['日時', '時間（分）', '時間（表示）', 'メモ'],
+                ...timeData.entries.map(entry => [
+                    formatDate(entry.timestamp),
+                    entry.minutes,
+                    formatTime(entry.minutes),
+                    entry.note || ''
+                ])
+            ].map(row => row.map(field => `"${field}"`).join(',')).join('\n');
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `timetrack_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+            
+            showStatus('CSVファイルをダウンロードしました', 'success');
+        }
+        
+        // ステータス表示
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+            statusDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 3000);
+        }
+        
+        // 初期化実行
+        initialize();
+    </script>
 </body>
 </html>
