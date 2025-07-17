@@ -263,8 +263,8 @@
     <script src="https://apis.google.com/js/api.js"></script>
     <script>
         // Google Drive API設定
-        const CLIENT_ID = '108612695308531539263'; // Google Cloud Consoleから取得
-        const API_KEY = '41bc705b4f51b4aebff7dbb7e2694b33b8cf9a60'; // Google Cloud Consoleから取得
+        const CLIENT_ID = 'YOUR_CLIENT_ID'; // Google Cloud Consoleから取得
+        // APIキーは使用せず、OAuth認証のみで動作
         const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
         const SCOPES = 'https://www.googleapis.com/auth/drive.file';
         
@@ -284,7 +284,6 @@
         
         async function initializeGapi() {
             await gapi.client.init({
-                apiKey: API_KEY,
                 clientId: CLIENT_ID,
                 discoveryDocs: [DISCOVERY_DOC],
                 scope: SCOPES
