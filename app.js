@@ -17,7 +17,7 @@
         function waitForGapi() {
             if (typeof gapi !== 'undefined' && gapi.load) {
                 console.log('Google API is ready');
-                gapi.load('client:auth2', initializeGapi);
+                gapi.load('auth2', initializeGapi);
             } else {
                 console.log('Waiting for Google API...');
                 setTimeout(waitForGapi, 100);
