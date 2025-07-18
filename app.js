@@ -33,7 +33,7 @@
         function initializeGapi() {
             console.log('Initializing Google API...');
             
-            gapi.client.init({
+            gapi.auth2.init({
                 clientId: CLIENT_ID,
                 discoveryDocs: [DISCOVERY_DOC],
                 scope: SCOPES
