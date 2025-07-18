@@ -1,6 +1,6 @@
 
         // Google Drive API設定
-        const CLIENT_ID = '431846331711-ld6uvodr8dom5thhqld9afg7qklg24ra.apps.googleusercontent.com';
+        const CLIENT_ID = '431846331711-eo7imsmnmslam4mpangb9frpgvbgiluu.apps.googleusercontent.com';
         // APIキーは使用せず、OAuth認証のみで動作
         const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
         const SCOPES = 'https://www.googleapis.com/auth/drive.file';
