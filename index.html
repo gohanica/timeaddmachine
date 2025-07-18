@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Time Tracker</title>
     <link rel="stylesheet" href="./styles.css"/>
+    <!-- Google Identity Services -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <!-- Google APIs -->
+    <script src="https://apis.google.com/js/api.js" async defer></script>
 </head>
 <body>
     <div class="container">
@@ -17,7 +21,7 @@
         <div id="authSection" class="auth-section">
             <h2>Google Drive連携</h2>
             <p>データの保存・読み込みにGoogle Driveを使用します</p>
-            <button class="btn" onclick="authorize()">Googleアカウントでログイン</button>
+            <div id="buttonDiv"></div>
         </div>
         
         <div id="mainApp" style="display: none;">
@@ -55,11 +59,14 @@
                 </div>
                 <button class="btn btn-secondary" onclick="exportData()">CSVエクスポート</button>
             </div>
+            
+            <div class="card">
+                <button class="btn btn-secondary" onclick="handleSignOut()">ログアウト</button>
+            </div>
         </div>
         
         <div id="status" class="status" style="display: none;"></div>
     </div>
-    <script src="https://apis.google.com/js/api.js"></script>
     <script src="./app.js"></script>
 </body>
 </html>
